@@ -73,10 +73,10 @@ class ArticleController extends Controller
         }
 //  $articles = DB::select(
 //             "SELECT * FROM articles WHERE title LIKE '%" . $query . "%'"
-//         );  fix article searche
+//         );  fix article search
         $articles = Article::query()
-            ->whereRaw('title COLLATE utf8mb4_0900_ai_ci LIKE ?', ["%{$query}%"]) 
-            ->orWhereRaw('content COLLATE utf8mb4_0900_ai_ci LIKE ?', ["%{$query}%"]) 
+            ->where('title', 'like', "%{$query}%")
+            ->orWhere('content', 'like', "%{$query}%")
             ->orderBy('published_at', 'desc')
             ->get(['id', 'title', 'content', 'published_at']);
 

@@ -71,19 +71,23 @@ class ArticleController extends Controller
         if (!$query) {
             return response()->json([]);
         }
+//  $articles = DB::select(
+//             "SELECT * FROM articles WHERE title LIKE '%" . $query . "%'"
+//         );  fix article searche
+        $articles = Article::query()
+            ->whereRaw('title COLLATE utf8mb4_0900_ai_ci LIKE ?', ["%{$query}%"]) 
+            ->orWhereRaw('content COLLATE utf8mb4_0900_ai_ci LIKE ?', ["%{$query}%"]) 
+            ->orderBy('published_at', 'desc')
+            ->get(['id', 'title', 'content', 'published_at']);
 
-        $articles = DB::select(
-            "SELECT * FROM articles WHERE title LIKE '%" . $query . "%'"
-        );
-
-        $results = array_map(function ($article) {
+        $results = $articles->map(function ($article) {
             return [
                 'id' => $article->id,
                 'title' => $article->title,
                 'content' => substr($article->content, 0, 200),
                 'published_at' => $article->published_at,
             ];
-        }, $articles);
+        });
 
         return response()->json($results);
     }

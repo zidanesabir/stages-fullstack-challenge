@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Article;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Cache;
 
 class ArticleController extends Controller
 {
@@ -13,7 +14,22 @@ class ArticleController extends Controller
      */
     public function index(Request $request)
     {
-        $articles = Article::all();
+        if (!$request->has('performance_test')) {
+            $cached = Cache::remember('articles:index', 60, function () {
+                return Article::query()
+                    ->with('author')
+                    ->withCount('comments')
+                    ->orderBy('published_at', 'desc')
+                    ->get(['id', 'title', 'content', 'author_id', 'published_at', 'created_at']);
+            });
+            $articles = $cached;
+        } else {
+            $articles = Article::query()
+                ->with('author')
+                ->withCount('comments')
+                ->orderBy('published_at', 'desc')
+                ->get(['id', 'title', 'content', 'author_id', 'published_at', 'created_at']);
+        }
 
         $articles = $articles->map(function ($article) use ($request) {
             if ($request->has('performance_test')) {
@@ -25,7 +41,7 @@ class ArticleController extends Controller
                 'title' => $article->title,
                 'content' => substr($article->content, 0, 200) . '...',
                 'author' => $article->author->name,
-                'comments_count' => $article->comments->count(),
+                'comments_count' => $article->comments_count,
                 'published_at' => $article->published_at,
                 'created_at' => $article->created_at,
             ];

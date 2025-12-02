@@ -17,7 +17,7 @@ class ArticleController extends Controller
         if (!$request->has('performance_test')) {
             $cached = Cache::remember('articles:index', 60, function () {
                 return Article::query()
-                    ->with('author')
+                    ->with(['author:id,name'])
                     ->withCount('comments')
                     ->orderBy('published_at', 'desc')
                     ->get(['id', 'title', 'content', 'author_id', 'published_at', 'created_at']);
@@ -25,7 +25,7 @@ class ArticleController extends Controller
             $articles = $cached;
         } else {
             $articles = Article::query()
-                ->with('author')
+                ->with(['author:id,name'])
                 ->withCount('comments')
                 ->orderBy('published_at', 'desc')
                 ->get(['id', 'title', 'content', 'author_id', 'published_at', 'created_at']);
